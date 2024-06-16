@@ -1,118 +1,70 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { Provider, useSelector } from 'react-redux';
+import store from './src/redux/store/store';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import SignUpScreen from './src/screens/SignUpScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import ProductsScreen from './src/screens/ProductsScreen';
+import auth from '@react-native-firebase/auth';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const AuthStack = createStackNavigator();
+const AppStack = createStackNavigator();
+const RootStack = createStackNavigator();
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+const AuthNavigator = () => {
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
+    <AuthStack.Navigator>
+      <AuthStack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
+      <AuthStack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+    </AuthStack.Navigator>
   );
-}
+};
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
+const AppNavigator = () => {
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <AppStack.Navigator>
+      <AppStack.Screen
+        name="Products"
+        component={ProductsScreen}
+        options={{ headerShown: false }}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    </AppStack.Navigator>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+const App = () => {
+  const isLoggedIn = auth()?.currentUser?.isAnonymous;
+
+  return (
+    <Provider store={store}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <NavigationContainer>
+          <RootStack.Navigator>
+            {isLoggedIn === undefined ? (
+              <>
+                <RootStack.Screen name='Auth' component={AuthNavigator} options={{ headerShown: false }} />
+                <RootStack.Screen name='APP' component={AppNavigator} options={{ headerShown: false }} />
+              </>
+            ) : (
+              !isLoggedIn ? (
+                <>
+                  <RootStack.Screen name='APP' component={AppNavigator} options={{ headerShown: false }} />
+                  <RootStack.Screen name='Auth' component={AuthNavigator} options={{ headerShown: false }} />
+                </>
+              ) : (
+                <>
+                  <RootStack.Screen name='Auth' component={AuthNavigator} options={{ headerShown: false }} />
+                  <RootStack.Screen name='APP' component={AppNavigator} options={{ headerShown: false }} />
+                </>
+              )
+            )}
+          </RootStack.Navigator>
+        </NavigationContainer>
+      </GestureHandlerRootView>
+    </Provider>
+  );
+};
 
 export default App;
